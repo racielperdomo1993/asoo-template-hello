@@ -1,0 +1,21 @@
+format: 'enc'
+ensure_start: true
+after_restart: false
+script:
+  dump-content:
+    description: 'Dump the served content of the branch'
+    commands:
+      - 'mkdir -p ${workspace}'
+      - 'tar -czf ${workspace}/${backup_name}.filestore.tar.gz html'
+      - 'sh -c "echo ${backup_name} > ${workspace}/${backup_name}.dump"'
+  encrypt:
+    description: 'Encrypt dump and filestore with the branch database password'
+    commands:
+      - 'openssl enc -aes-256-cbc -pbkdf2 -salt -in ${workspace}/${backup_name}.dump -out ${workspace}/${backup_name}.dump.enc -pass pass:${db_password}'
+      - 'openssl enc -aes-256-cbc -pbkdf2 -salt -in ${workspace}/${backup_name}.filestore.tar.gz -out ${workspace}/${backup_name}.filestore.tar.gz.enc -pass pass:${db_password}'
+  upload:
+    description: 'Upload the encrypted files to the object storage'
+    commands:
+      - 'swift --os-storage-url ${container.url} --os-auth-token ${container.token} upload ${container.name} ${workspace}/${backup_name}.dump.enc --object-name ${backup_name}.dump.enc'
+      - 'swift --os-storage-url ${container.url} --os-auth-token ${container.token} upload ${container.name} ${workspace}/${backup_name}.filestore.tar.gz.enc --object-name ${backup_name}.filestore.tar.gz.enc'
+      - 'rm -rf ${workspace}'
