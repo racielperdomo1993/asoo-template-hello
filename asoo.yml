@@ -27,6 +27,7 @@ environment_info:
   workspace: '/opt/${object.server_id.technical_name}-${object.name}-${object.id}'
   process_files:
     - 'docker-compose.yml'
+    - 'app.conf'
     - 'html/index.html'
   rebuild_files:
     - 'Dockerfile'
