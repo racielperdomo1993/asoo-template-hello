@@ -11,6 +11,11 @@ server_setup:
     sudo: true
     commands:
       - 'chmod 757 /opt/'
+  install-swiftclient:
+    sudo: true
+    commands:
+      - 'apt-get update'
+      - 'apt-get install -y --no-install-recommends python3-swiftclient'
 
 environment_info:
   application: 'hello'
