@@ -1,0 +1,19 @@
+format: 'enc'
+ensure_start: false
+after_restart: true
+remove_volumes: false
+script:
+  download:
+    description: 'Download the encrypted files from the object storage'
+    commands:
+      - 'mkdir -p ${workspace}'
+      - 'swift --os-storage-url ${container.url} --os-auth-token ${container.token} download ${container.name} ${object_storage.backup_group}.dump.enc --output ${workspace}/${object_storage.backup_group}.dump.enc'
+      - 'swift --os-storage-url ${container.url} --os-auth-token ${container.token} download ${container.name} ${object_storage.backup_group}.filestore.tar.gz.enc --output ${workspace}/${object_storage.backup_group}.filestore.tar.gz.enc'
+  decrypt-and-restore:
+    description: 'Decrypt and restore the served content into the branch'
+    commands:
+      - 'openssl enc -d -aes-256-cbc -pbkdf2 -in ${workspace}/${object_storage.backup_group}.filestore.tar.gz.enc -out ${workspace}/${object_storage.backup_group}.filestore.tar.gz -pass pass:${db_password}'
+      - 'openssl enc -d -aes-256-cbc -pbkdf2 -in ${workspace}/${object_storage.backup_group}.dump.enc -out ${workspace}/${object_storage.backup_group}.dump -pass pass:${db_password}'
+      - 'tar -xzf ${workspace}/${object_storage.backup_group}.filestore.tar.gz'
+      - 'sh -c "cp ${workspace}/${object_storage.backup_group}.dump html/restored.txt"'
+      - 'rm -rf ${workspace}'
